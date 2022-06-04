@@ -33,6 +33,19 @@ class VideoProcessor:
     def get_num_of_videos(self) -> int:
         return len(self.videos)
 
+    def load_data(self, test_split_ratio: float) \
+            -> Tuple[Tuple[NDArray[np.float64], NDArray[np.str]], Tuple[NDArray[np.float64], NDArray[np.str]]]:
+        if test_split_ratio > 1.0 or test_split_ratio < 0:
+            raise ValueError("Incorrect split ratio, use values <0;1>")
+        split_point = int(self.get_num_of_videos() * test_split_ratio)
+        np.random.seed(1)
+        p = np.random.permutation(self.get_num_of_videos())
+
+        x = np.array([video.frames for video in self.videos])
+        y = np.array([video.klass for video in self.videos])
+
+        return (x[p[split_point:]], y[p[split_point:]]), (x[p[:split_point]], y[p[:split_point]])
+
     @staticmethod
     def split_video_to_sub_videos(video: Video, frames_num: int) -> List['VideoProcessor.Video']:
         splitted_videos = []
@@ -76,11 +89,11 @@ class VideoProcessor:
     @staticmethod
     def preview_video(video: Video) -> animation.FuncAnimation:
 
-        def draw_point(image: NDArray[np.float64], x: int, y: int) -> NDArray[np.float64]:
+        def draw_point(image: NDArray[np.int64], x: int, y: int) -> NDArray[np.int64]:
             image[y][x][0] = 255
             return image
 
-        def draw_pose(pose: NDArray[np.float64], shape: Tuple[int, int]) -> NDArray[np.float64]:
+        def draw_pose(pose: NDArray[np.float64], shape: Tuple[int, int]) -> NDArray[np.int64]:
             w, h = shape
             image = np.zeros((h, w, 3)).astype(np.int64)
             for point in pose:
