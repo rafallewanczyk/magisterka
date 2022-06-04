@@ -1,6 +1,6 @@
 import numpy as np
 
-from dataset_processor import DatasetProcessor
+from dataset_processor import VideoProcessor
 
 
 class TestDatasetProcessor:
@@ -11,7 +11,7 @@ class TestDatasetProcessor:
         frame_num = 3
 
         # when
-        out_poses = DatasetProcessor.split_pose_to_frame_seq(pose=example_pose, frames_num=frame_num)
+        out_poses = VideoProcessor.split_pose_to_frame_seq(pose=example_pose, frames_num=frame_num)
 
         # then
         assert np.array_equal(out_poses, np.array([
@@ -32,7 +32,7 @@ class TestDatasetProcessor:
         frame_num = 5
 
         # when
-        out_poses = DatasetProcessor.split_pose_to_frame_seq(pose=example_pose, frames_num=frame_num)
+        out_poses = VideoProcessor.split_pose_to_frame_seq(pose=example_pose, frames_num=frame_num)
 
         # then
         assert np.array_equal(out_poses, np.array([example_pose]))
