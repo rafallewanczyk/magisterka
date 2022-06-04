@@ -5,7 +5,7 @@ from dataset_processor import DatasetProcessor
 
 class TestDatasetProcessor:
 
-    def test_split_pose_should_return_2_sequences(self):
+    def test_split_pose_should_return_2_sequences(self) -> None:
         # given
         example_pose = np.array([[1, 1], [2, 2], [3, 3], [4, 4]])
         frame_num = 3
@@ -26,7 +26,7 @@ class TestDatasetProcessor:
             ],
         ]))
 
-    def test_split_pose_should_return_same_sequence(self):
+    def test_split_pose_should_return_same_sequence(self) -> None:
         # given
         example_pose = np.array([[1, 1], [2, 2], [3, 3], [4, 4]])
         frame_num = 5
