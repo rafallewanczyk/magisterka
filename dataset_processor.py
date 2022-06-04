@@ -30,6 +30,9 @@ class VideoProcessor:
         else:
             self.videos.append(read_video)
 
+    def get_num_of_videos(self) -> int:
+        return len(self.videos)
+
     @staticmethod
     def split_video_to_sub_videos(video: Video, frames_num: int) -> List['VideoProcessor.Video']:
         splitted_videos = []
@@ -79,7 +82,7 @@ class VideoProcessor:
 
         def draw_pose(pose: NDArray[np.float64], shape: Tuple[int, int]) -> NDArray[np.float64]:
             w, h = shape
-            image = np.zeros((h, w, 3))
+            image = np.zeros((h, w, 3)).astype(np.int64)
             for point in pose:
                 image = draw_point(image, int(point[0] * w), int(point[1] * h))
             return image
