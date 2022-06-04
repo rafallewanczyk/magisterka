@@ -15,17 +15,16 @@ class VideoProcessor:
         shape: Tuple[int, int]
         klass: str
 
-    def __init__(self) -> None:
+    def __init__(self, sub_video_frames_num: int) -> None:
         self.videos: List[VideoProcessor.Video] = []
-        self.x: NDArray[np.float64] = np.array([])
-        self.y: NDArray[np.float64] = np.array([])
+        self.sub_video_frames_num: int = sub_video_frames_num
 
-    def add_video(self, video_path: str, split_on_frames_num: Optional[int] = None) -> None:
-        frames, shape, klass = VideoProcessor.get_pose_from_file(video_path)
+    def add_video(self, video_path: str) -> None:
+        frames, shape, klass = VideoProcessor._get_pose_from_file(video_path)
         read_video = VideoProcessor.Video(video_path, frames, shape, klass)
 
-        if split_on_frames_num:
-            sub_videos = VideoProcessor.split_video_to_sub_videos(read_video, split_on_frames_num)
+        if self.sub_video_frames_num:
+            sub_videos = VideoProcessor._split_video_to_sub_videos(read_video, self.sub_video_frames_num)
             self.videos.extend(sub_videos)
         else:
             self.videos.append(read_video)
@@ -47,7 +46,7 @@ class VideoProcessor:
         np.random.seed(1)
         p = np.random.permutation(self.get_num_of_videos())
 
-        x = np.array([video.frames for video in self.videos])
+        x = np.array([self._flatten_last_dim(video.frames) for video in self.videos])
         y = np.array([klass_to_int[video.klass] for video in self.videos])
 
         return (x[p[split_point:]], y[p[split_point:]]), (x[p[:split_point]], y[p[:split_point]]), int_to_klass
@@ -65,22 +64,29 @@ class VideoProcessor:
             klass_num += 1
         return klass_to_int, int_to_klass
 
+    def _flatten_last_dim(self, array: NDArray[np.float64]) -> NDArray[np.float64]:
+        return array.reshape((self.sub_video_frames_num, 34))
+
     @staticmethod
-    def split_video_to_sub_videos(video: Video, frames_num: int) -> List['VideoProcessor.Video']:
+    def _split_video_to_sub_videos(video: Video, frames_num: int) -> List['VideoProcessor.Video']:
         splitted_videos = []
-        splitted_frames = VideoProcessor.split_pose_to_frame_seq(video.frames, frames_num)
-        for split in splitted_frames:
-            splitted_videos.append(VideoProcessor.Video(video.path, split, video.shape, video.klass))
+        splitted_frames = VideoProcessor._split_pose_to_frame_seq(video.frames, frames_num)
+        if splitted_frames is not None:
+            for split in splitted_frames:
+                splitted_videos.append(VideoProcessor.Video(video.path, split, video.shape, video.klass))
         return splitted_videos
 
     @staticmethod
-    def get_pose_from_file(filename: str) -> Tuple[NDArray[np.float64], Tuple[int, int], str]:
+    def _get_pose_from_file(filename: str) -> Tuple[NDArray[np.float64], Tuple[int, int], str]:
         klass = filename.split('/')[-2]
         with open(filename, 'rb') as file:
             frames = pkl.load(file)
 
         frame_list = []
         for frame in frames:
+            if not frame or 'result' not in frame or len(frame['result']) < 1:
+                continue
+
             keypoints = frame['result'][0]['keypoints']
             frame_list.append(keypoints)
         frame_array = np.array(frame_list)
@@ -95,9 +101,9 @@ class VideoProcessor:
         return frame_array[:, ] / (w, h), (w, h), klass
 
     @staticmethod
-    def split_pose_to_frame_seq(pose: NDArray[np.float64], frames_num: int) -> NDArray[np.float64]:
+    def _split_pose_to_frame_seq(pose: NDArray[np.float64], frames_num: int) -> Optional[NDArray[np.float64]]:
         if frames_num > pose.shape[0]:
-            return np.array([pose])
+            return None
 
         total_frames = []
         start, end = 0, frames_num
