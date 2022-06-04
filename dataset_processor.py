@@ -1,6 +1,6 @@
 import pickle as pkl
 from dataclasses import dataclass
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Dict
 
 import numpy as np
 from matplotlib import pyplot as plt, animation
@@ -34,17 +34,36 @@ class VideoProcessor:
         return len(self.videos)
 
     def load_data(self, test_split_ratio: float) \
-            -> Tuple[Tuple[NDArray[np.float64], NDArray[np.str]], Tuple[NDArray[np.float64], NDArray[np.str]]]:
+            -> Tuple[
+                Tuple[NDArray[np.float64], NDArray[np.int64]],
+                Tuple[NDArray[np.float64], NDArray[np.int64]],
+                Dict[int, str]]:
+
         if test_split_ratio > 1.0 or test_split_ratio < 0:
             raise ValueError("Incorrect split ratio, use values <0;1>")
         split_point = int(self.get_num_of_videos() * test_split_ratio)
+        klass_to_int, int_to_klass = self._get_klass_dict()
+
         np.random.seed(1)
         p = np.random.permutation(self.get_num_of_videos())
 
         x = np.array([video.frames for video in self.videos])
-        y = np.array([video.klass for video in self.videos])
+        y = np.array([klass_to_int[video.klass] for video in self.videos])
 
-        return (x[p[split_point:]], y[p[split_point:]]), (x[p[:split_point]], y[p[:split_point]])
+        return (x[p[split_point:]], y[p[split_point:]]), (x[p[:split_point]], y[p[:split_point]]), int_to_klass
+
+    def _get_klass_dict(self) -> Tuple[Dict[str, int], Dict[int, str]]:
+        klass_to_int = {}
+        int_to_klass = {}
+        klass_num = 0
+
+        for video in self.videos:
+            if video.klass in klass_to_int:
+                continue
+            klass_to_int[video.klass] = klass_num
+            int_to_klass[klass_num] = video.klass
+            klass_num += 1
+        return klass_to_int, int_to_klass
 
     @staticmethod
     def split_video_to_sub_videos(video: Video, frames_num: int) -> List['VideoProcessor.Video']:
