@@ -3,7 +3,7 @@ from typing import cast
 import numpy as np
 from numpy.typing import NDArray
 
-from dataset_processor import VideoProcessor
+from src.dataset_processor import VideoProcessor
 
 
 class TestDatasetProcessor:
