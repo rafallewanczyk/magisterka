@@ -59,9 +59,27 @@ class Video:
         return bbox_labels, frames
 
     def dump_bboxes_frames(self, filename_pattern: str):
-        for idx, (bbox, frame) in zip(*self.get_svw_bboxes_frames()):
-            cv2.imwrite(filename_pattern.format(idx=idx), frame)
+        lines = []
+        Path(filename_pattern).parent.mkdir(parents=True, exist_ok=True)
+        for idx, (bbox, frame) in enumerate(zip(*self.get_svw_bboxes_frames())):
+            image_path = Path(filename_pattern.format(idx=idx))
+            cv2.imwrite(image_path.as_posix(), frame)
+            lines.append(Video.generate_lst_line(image_path, bbox, frame, "{idx}"))
+        return lines
 
-    def generate_lst_line(self, frame_path: Path, bbox: int):
-        pass
+    @staticmethod
+    def generate_lst_line(frame_path: Path, bbox: SVWBoundingBox, frame: np.array, idx: str):
+        # only one bbox per class
 
+        h, w, c = frame.shape
+        header_length = 4
+        length_of_label = 5
+        str_idx = [idx]
+        str_header = [str(x) for x in [header_length, length_of_label, w, h]]
+
+        # 0 for class person
+        str_labels = ['0', str(bbox.x_min/w), str(bbox.y_min/h), str(bbox.x_max/w), str(bbox.y_max/h)]
+        str_path = [frame_path.as_posix()]
+
+        line = '\t'.join(str_idx + str_header + str_labels + str_path) + '\n'
+        return line

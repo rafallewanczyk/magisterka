@@ -18,7 +18,7 @@ class SVWBoundingBox:
         return cls(frame, x_min, y_min, x_min + w, y_min + h)
 
     def __post_init__(self):
-        self.frame = int(self.frame)
+        self.frame = int(self.frame) - 1  # frames are indexed from 1
         self.x_min = float(self.x_min)
         self.y_min = float(self.y_min)
         self.x_max = float(self.x_max)
